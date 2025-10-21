@@ -19,11 +19,15 @@
 #show heading: set text(
   size: 12pt,
 
-  fill: aqua.darken(70%))
+  fill: blue.darken(50%))
 #show heading: it => {
-  v(0.5em)
+  v(0.25em)
   it
 }
+
+#show emph: set text(
+  fill: orange.darken(20%),
+)
 
 #set enum(indent: 1.5em, spacing: 1.5em)
 
@@ -60,7 +64,7 @@ Their slow rate of convergence and the high computational cost required for prec
 Nevertheless, due to their robustness and broad applicability, Monte Carlo simulations have become the workhorse of computational finance.
 
 This report provides an overview of Monte Carlo methods in finance. Working knowledge of derivative pricing is assumed
-and the focus is on the implementation of Monte Carlo methods for pricing derivatives. We first introduce some basic concepts in option pricing, followed by the basic Monte Carlo method for estimating expected payoffs. The discussion then addresses the limitations of the basic method and also the standard variance reduction techniques.
+and the focus is on the implementation of Monte Carlo methods for pricing derivatives. We first introduce some basic concepts in option pricing, followed by the plain Monte Carlo method for estimating expected payoffs. The discussion then addresses the limitations of the plain method and also the standard variance reduction techniques.
 
 #pagebreak()
 = Option Pricing
@@ -98,7 +102,7 @@ where $S_0$ is the initial stock price, $sigma$ is the volatility, and $W_t$ is 
 To estimate the expected payoff $v$, we can use Monte Carlo methods, which rely on random sampling to approximate the expected value.
 
 #pagebreak()
-= Basic Monte Carlo
+= Plain Monte Carlo
 To estimate the quantity
 $ v = EE[h(X)] $
 where $h$ is a function of $X$, we generate $N$ independent and identically distributed (i.i.d.) samples ${X_i}_(i=1)^N$ from the distribution of $X$ with density $f_X$.
@@ -108,7 +112,7 @@ This is an unbiased estimate $hat(v)$ of the true mean $v$, i.e., $EE[hat(v)] = 
 and the variance of $hat(v)$ is given by
 $ "Var"(hat(v)) = 1/ N^2 sum_(i=1)^N "Var"(h(X_i))  = "Var"(h(X)) / N, $
 As the number of samples $N$ increases, the variance of $hat(v)$ decreases proportionally to $1\/N$. Consequently, the estimator 
-$hat(v)$ converges to the true mean $v$ _in the long run_.
+$hat(v)$ converges to the true mean $v$ in the long run.
 
 #algo(
   line-numbers: false,
@@ -173,12 +177,12 @@ $hat(v)$ converges to the true mean $v$ _in the long run_.
 == Limitations
 The numerical results in the previous section for the European call and Asian options demonstrate that, although the plain Monte Carlo method provides unbiased estimates, its convergence rate is relatively slow.
 
-According to the Central Limit Theorem (CLT), if $"Var"(h(X)) = sigma^2 < oo$, then as $N -> oo$,
+According to the _Central Limit Theorem (CLT)_, if $"Var"(h(X)) = sigma^2 < oo$, then as $N -> oo$,
 $ sqrt(N) (hat(v) - v) -> N(0, sigma^2), $
 
-implying that for large $N$, the estimation error $hat(v) - v$ is approximately normally distributed with mean 0 and standard deviation $sigma \/ sqrt(N)$. So to be precise, the standard error (S.E.) of the estimate decays at rate $cal(O)(1\/sqrt(N))$. While this rate is independent of dimension, the variance $sigma^2$ often increases with dimension or payoff complexity, which can lead to low efficiency in practical settings.
+implying that for large $N$, the estimation error $hat(v) - v$ is approximately normally distributed with mean 0 and standard deviation $sigma  N^(-1/2)$. So to be precise, the standard error (S.E.) of the estimate decays at rate $cal(O)(N^(-1/2))$.
 
-@plain-monte-carlo-se-vs-sample-size illustrates this behaviour: the log-log plot of S.E. versus sample size $N$ follows a straight line with slope approximately $-0.5$, corroborating the theoretical rate.
+This is illustrated in @plain-monte-carlo-se-vs-sample-size: the log-log plot of S.E. versus sample size $N$ follows a straight line with slope approximately $-1/2$, so the empirical results match the theoretical rate.
 
 #figure(
   caption: [Plain Monte Carlo: Standard Error vs Sample Size],
@@ -187,19 +191,49 @@ implying that for large $N$, the estimation error $hat(v) - v$ is approximately 
     width: 10cm,)
 ] <plain-monte-carlo-se-vs-sample-size>
 
-Achieving higher accuracy by increasing $N$ is computationally expensive: o reduce S.E. by a factor of tem requires roughly one hundred times more samples. This limitation motivates the development of _variance reduction techniques_, which aim to decrease the variance $sigma^2$ of the estimator without increasing the sample size.
+
+
+While this rate is independent of the problem dimension $d$, the variance $sigma^2$ often increases with $d$ or payoff complexity, and can bear a significant cost on estimation accuracy. For example, when the option becomes _deep out-of-the-money_, the payoff distribution becomes very skewed leading to large $sigma^2$. In @plain-monte-carlo-re-vs-strike-price, we vary the strike price of the European call option from $K = 40$ to $K = 80$ and observe the R.E. for a fixed sample size of $N = 10,000$. As $K$ increases, the R.E. also increases significantly.
+
+#figure(
+  caption: [Plain Monte Carlo: Relative Error vs Strike Price],
+)[
+  #image("assets/plain-monte-carlo-re-vs-strike-price.png",
+    width: 10cm,)
+] <plain-monte-carlo-re-vs-strike-price>
+
+To get a more accurate estimate, increasing the sample size $N$ can become very computationally expensive: reducing S.E. by a factor of ten requires roughly one hundred times more samples. This limitation motivates the development of _variance reduction techniques_, which aim to decrease the variance $sigma^2$ of the estimator without increasing the sample size.
+
+
+
 
 #pagebreak()
 = Variance Reduction Techniques
 Although the plain Monte Carlo method provides unbiased estimates and is straightforward to implement, its slow convergence rate and potentially large variance often make it computationally inefficient for high-precision estimation. To address this, a range of variance reduction techniques have been developed to improve estimator accuracy without proportionally increasing the number of samples.
 
-This section introduces several widely used methods: antithetic sampling, which exploits negative correlation between paired samples; control variates, which leverage known expectations of correlated quantities; control functionals, which use functional approximations within reproducing kernel Hilbert spaces; stratified sampling, which ensures balanced coverage of the sample space; and importance sampling, which concentrates samples in regions of high contribution to the integral.
+This section introduces several widely used methods: antithetic sampling, control variates, control functionals, stratified sampling, and importance sampling. Typically, these techniques construct a new Monte Carlo estimator $hat(v)_"new"$ that is still unbiased but has lower variance than the plain estimator $hat(v)$ for the same sample size $N$. 
 
-Other advanced techniques, such as quasi-Monte Carlo methods and multi-level Monte Carlo, are often use to obtain further gains in efficiency but are beyond the scope of this report.
+Other techniques, such as quasi-Monte Carlo methods and multi-level Monte Carlo, are often use to obtain further gains in efficiency but are beyond the scope of this report.
 
 == Antithetic Sampling
-// TODO: write this section
+Antithetic sampling is a varaince reduction technique that involves generating i.i.d. pairs of random variables $(X_i, Y_i)$ such that
+
+#enum(
+  numbering: "i.",
+  [$X_i$ and $Y_i$ have the same distribution.],
+  [$X_i$ and $Y_i$ are _negatively correlated_.]
+)
+We can construct a new unbiased estimator for $EE[X]$ of the form
+$ hat(v)_"AS" = 1/N sum_(i = 1)^N (X_i + Y_i)/2. $
+If $beta$ is the correlation between $X$ and $Y$, and $beta < 0$, then the variance of $hat(v)_"AS"$
+$ "Var"[hat(v)_"AS"] = (1 + beta) "Var"[X] / (2N) $
+is lower than the variance of the plain Monte Carlo estimator on $2N$ sample, that is,
+$ "Var"[hat(v)] = "Var"[X]/(2N) $
+Hence, the effectiveness of antithetic sampling depends on the strength of the negative correlation; stronger negative correlation leads to greater variance reduction #footnote[In practice, the antithetic pairs $(X_i, Y_i)$ are often generated by transforming a common random variable. For example, if $X_i = h(U_i)$ where $U_i ~ "Uniform"(0, 1)$, then we can set $Y_i = h(1 - U_i)$. This construction ensures that $X_i$ and $Y_i$ are negatively correlated if $h$ is monotonic.].
+
 === Examples
+
+
 === Limitations
 
 
@@ -215,8 +249,8 @@ Suppose we can find another random variable $Y$ such that:
 Then we can construct a new estimator for $EE[X]$ that leverages the information from $Y$ to reduce variance.  The form of the new estimator is
 $ hat(v)_"CV" = 1/N sum_(i = 1)^N X_i - b(1/N sum_(i = 1)^N Y_i - EE[Y]) $
 and $Y$ is known as the _control variate_. Note that $hat(v)_"CV"$ is still an unbiased estimator of $EE[X]$ for any choice of $b in RR$.
-Then the variance of $hat(H)$ is a quadratic in $b$:
-$ "Var"[hat(H)] = 1 / N ["Var"[X] + b^2 "Var"[Y] - 2 b "Cov"(X, Y)], $
+Then the variance of $hat(v)_"CV"$ is a quadratic in $b$:
+$ "Var"[hat(v)_"CV"] = 1 / N ["Var"[X] + b^2 "Var"[Y] - 2 b "Cov"(X, Y)], $
 which is minimized when $b$ is chosen as
 $ b^* = beta sigma_X / sigma_Y =  ("Cov"(X, Y)) / ("Var"(Y)) $
 where $beta$ is the correlation between $X$ and $Y$. Intuitively, we are regressing $X$ against $Y$ and removing the component of $X$ that is explained by $Y$, resulting in lower variance#footnote[Usually, $b^*$ is estimated from a pilot run independent to the main simulation, otherwise bias may be introduced. In this view, $b^*$ is the estimated coefficient of $Y$ in the linear model $X ~ Y$.]. Under $b^*$, the variance of the new estimator is
@@ -233,7 +267,7 @@ This is lower than the variance of the plain Monte Carlo estimator by a factor o
   $ H = dash(X) - b(dash(Y) - EE[Y]) $
   where $X = e^(-r T) h(S_T)$ and $Y = S_T$. The optimal coefficient $b^*$ can be estimated from a pilot simulation.
 
-  The basic Monte Carlo estimate is compared against the control variate estimate below.
+  The plain Monte Carlo estimate is compared against the control variate estimate below.
   
   [table of results]
   ],
@@ -378,7 +412,7 @@ See @RKHS-kernel-functions for a visualization of elements from $cal(H)$ and $ca
 #enum(
   [*Butterfly Multistrike Option.* Consider a deep out-of-the-money butterfly option with strike prices $K_1 = 90, K_2 = 100$, and $K_3 = 120$. The payoff of the option at maturity $T$ is given by
   $ h(S_T) = (S_T - K_1)^+ - 2 (S_T - K_2)^+ + (S_T - K_3)^+. $
-  We compare the performance of the basic Monte Carlo estimator against the control functional estimator using the standard normal distribution and RBF kernel with $alpha = 1.0$. The parameters used are:
+  We compare the performance of the plain Monte Carlo estimator against the control functional estimator using the standard normal distribution and RBF kernel with $alpha = 1.0$. The parameters used are:
   $ r = 0.05, sigma = 0.3, T = 1. $
   For $S_0 = 60$ and a sample size of $N = 10,000$, we report the results in @butterfly-option-results below:
 
