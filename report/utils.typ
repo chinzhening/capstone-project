@@ -1,5 +1,5 @@
 #let fonts = (
-  serif: "Libertinus Serif",
+  serif: "CMU Serif",
   sans: "Noto Sans",
   mono: "Incosolata",
 )
@@ -11,27 +11,54 @@
   examiner: none,
   department: none,
   institution: none,
+  module: none,
   info: none,
 ) = {
   show: set par(spacing: 1.5em)
-  v(1fr)
+  v(0.15fr)
+
   align(center,{
+    // institution name
+    block(text(size: 18pt, smallcaps[#institution]))
+
+    v(0.15fr)
+
+    // module code
+    block(text(size: 16pt, smallcaps[#module]))
+
+    v(0.1fr)
+
+    line(length: 100%)
     block(
-      above: 2.5em,
+      above: 1.5em,
       below: 2.5em,
-      text(size: 16pt, font: fonts.sans, title)
+      text(size: 20pt, weight:"bold", title)
     )
+    line(length: 100%)
 
     // names
-    block(text(size: 12pt, student))
-    block(text(size: 12pt, supervisor))
-    block(text(size: 12pt, examiner))
+    table(
+      columns: (auto, 1fr, auto),
+      inset: (x: 2em, y: 0.5em),
+      stroke: none,
+      align(left)[_Student_], [], align(right)[_Supervisor_],
+      block(
+        align(left,
+        text(size: 12pt, smallcaps(student)))
+      ),
+      [],
+      block(
+        align(right,
+        text(size: 12pt, weight: "thin", smallcaps(supervisor))
+        )
+      )
+    )
     
-    // institution information
-    block(text(size: 12pt, department))
-    block(text(size: 12pt, institution))
+    v(0.6fr)
+    
+    block(text(size: 12pt, examiner))
+   
     block(text(size: 12pt, info))
   })
-  v(1fr)
+  v(0.3fr)
 }
-
