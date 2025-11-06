@@ -71,39 +71,9 @@ def binary_call(S_0, K, r, T, sig):
     return np.exp(-r * T) * norm.cdf(-b)
 
 # Example 2.5
-def discretely_monitored_average_price_call_option(S_0, K, r, T, sig, m):
+def discretely_monitored_geometric_average_price_call(S_0, K, r, T, sig, m):
     """
-    Price of a discretely monitored average price call option under the Black-Scholes model.
-
-    Parameters
-    ----------
-    S_0 : float
-        Current stock price.
-    K : float
-        Strike price of the option.
-    r : float
-        Risk-free interest rate (annualized, continuously compounded).
-    T : float
-        Time to maturity in years.
-    sig : float
-        Volatility of the underlying asset (annualized standard deviation).
-    m : int
-        Number of monitoring dates (including maturity).
-    Returns
-    -------
-    float
-        Present value of the average price call option. The payoff at maturity is
-        max( (1/m) * sum_{i=1}^m S_{t_i} - K, 0 ), where t_i are the monitoring dates.
-
-    Notes
-    -----
-    The formula used is:
-        C = exp(-r T) * [ exp(mu_bar + 0.5 sig_bar^2) * N(sqrt(sig_bar^2) - theta) - K * N(-theta) ],
-    where
-        t_bar = T * (m + 1) / (2 * m),
-        mu_bar = ln(S_0) + (r - 0.5 sig^2) * t_bar,
-        sig_bar^2 = sig^2 * (m + 1)(2m + 1) / (6 m^2) * T,
-        theta = [ln(K) - mu_bar] / sqrt(sig_bar^2).
+    Price of a discretely monitored geometric average price call option under the Black-Scholes model.
     """
     t_bar = T * (m + 1) / (2 * m)
     mu_bar = np.log(S_0) + (r - 0.5 * sig**2) * t_bar
