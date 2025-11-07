@@ -17,11 +17,11 @@
 #show heading: it => {
   v(0.5em)
   it
-  v(0.5em)
+  v(0.25em)
 }
 
 #set text(size: 11pt, font: fonts.serif)
-#set par(leading: 1.15em)  // line spacing
+/#set par(leading: 1.15em)  // line spacing
 
 #set table(stroke: 0.5pt)
 
@@ -61,12 +61,11 @@ The last section focuses on the importance sampling technique, which is widely u
 == Option Pricing
 
 Suppose that the payoff of a derivative is given by a function $h(Z)$ of a random
-variable $Z$ related to the underlying asset. By the principle of no-arbitrage, the derivative's price can be modeled as the expected discounted payoff under the risk-neutral measure $QQ$
+variable $Z$ related to the underlying asset. By the principle of no-arbitrage, the price of the derivative can be modeled as the expected discounted payoff under the risk-neutral measure $QQ$
 $ v = EE^QQ [e^(-r T) h(Z)], $
 
 //$ v = EE[e^(-r T) h(X)], $
-where $r$ is the _risk-free interest rate_ and $T$ is the time to maturity[cite], when the payoff is realized. There is a lot that can be said about the risk-neutral measure, but for our purposes, it suffices to know that it is a probability measure under which the discounted asset prices are _martingales_.
-Under this measure, all assets are expected to grow at the risk-free rate, simplifying pricing to the computation of expected discounted payoffs.
+where $r$ is the _risk-free interest rate_ and $T$ is the time to maturity, when the payoff is realized. A lot can be said about the risk-neutral measure, but for our purposes, it suffices to know that it is a probability measure under which all assets are expected to grow at the risk-free rate, simplifying pricing to the computation of expected discounted payoffs.
 
 Given an appropriate model for the underlying asset price dynamics, we can sample from the distribution of $Z$ and compute samples of $h(Z)$.
 A basic model for the underlying asset price $S_t$ at time $t$, is geometric Brownian motion:
@@ -88,7 +87,8 @@ Because of its simple theoretical properties, we will assume this model througho
   [*Asian Call Option.* For a discretely monitored average price call option, the
   payoff is given by
   $ h(S_(t_1), S_(t_2), ..., S_(t_m)) = e^(-r T )(1/m sum_(i= 1)^m S_(t_i) - K)^+, $
-  where $0 < t_1 < dots.c < t_m = T$ are a fixed set of dates. Closed-form solutions for this path dependent option does not exist but for the case where the average is geometric, an analytical solution is available #cite(label("kemna1990pricing")). Hence, we resort to Monte Carlo methods to estimate the option price.],
+  where $0 < t_1 < dots.c < t_m = T$ are a fixed set of dates. Closed-form expressions for the price of this path dependent option does not exist but for the case where the average is geometric, an analytical solution is available #cite(label("kemna1990pricing")).
+  Hence, we must resort to numerical methods to estimate this option price. Since the price can be modeled as an expectation, Monte Carlo methods provide a natural approach for doing so. ],
 )
 
 These are two running examples that will be used throughout the report to illustrate the concepts and methods discussed.
@@ -106,8 +106,8 @@ $hat(v)$ converges to the true mean $v$ in the long run.
 === Examples <plain-monte-carlo-examples>
 #enum(
   numbering: "1.",
-  [*European Call Option.* Consider the problem of estimating the price of a European call option described in @option-examples with $K = 60$ and $T = 1$. Assuming the parameters
-  $ S_0 = 50, r = 0.05, sigma = 0.2,$ we estimate the option price using the plain Monte Carlo method for various sample sizes $N$.
+  [*European Call Option.* Consider the problem of estimating the price of a European call option described in @option-examples with $K = 60$ and $T = 1$. With the parameters
+  $ S_0 = 50, quad r = 0.05, quad sigma = 0.2, $ we estimate the option price using the plain Monte Carlo method for various sample sizes $N$.
   The Monte Carlo estimate, standard error (S.E.), and relative error (R.E.) are presented in @plain-monte-carlo-results.
 
   #figure(
@@ -123,11 +123,11 @@ $hat(v)$ converges to the true mean $v$ in the long run.
     )
   ] <plain-monte-carlo-results>
 
-  As $N$ increases, the estimate $hat(v)$ converges to the true option price $v = 1.6237$, and the standard error decreases to zero, this demonstrates the consistency of the Monte Carlo estimate.],
-  [*Asian Call Option.* Consider the problem of estimating the price of a discretely monitored Asian call option described in @option-examples with $k = 60$ and $T = 1$. Assuming the parameters
-  $ S_0 = 50, r = 0.05, sigma = 0.2 $
-  and monitoring at $m = 100$ equally spaced time points, we estimate the option price using the plain Monte Carlo method for various sample sizes $N$. The results are summarised in @asian-monte-carlo-results.
-  
+  As $N$ increases, the estimate $hat(v)$ converges to the true option price $v = 1.6237$, and the standard error decreases to zero, this demonstrates the consistency of the Monte Carlo estimator.],
+  [*Asian Call Option.* Consider the problem of estimating the price of a discretely monitored Asian call option described in @option-examples with $K = 60$ and $T = 1$. Assuming the parameters
+  $ S_0 = 50, quad r = 0.05, quad sigma = 0.2 $
+  and monitoring at $m = 100$ equally spaced time points $t_i = i T\/m$, $i = 1, ..., m$.
+  We estimate the option price using the plain Monte Carlo method for various sample sizes $N$. The results are summarised in @asian-monte-carlo-results. As observed in the European call option, the S.E. decreases as the sample size $N$ increases.
   #figure(
     caption: [Asian Call Option: Plain Monte Carlo Estimate vs Sample Size],
   )[
@@ -140,17 +140,13 @@ $hat(v)$ converges to the true mean $v$ in the long run.
       [R.E.], [43.36%], [14.09%], [4.60%], [1.47%], [0.47%],
     )
   ] <asian-monte-carlo-results>
-
-  The standard error decreases as the sample size $N$ increases, as observed in the European call option example. 
   ]
 )
 
 === Limitations
-The numerical results in the previous section for the European call and Asian options demonstrate that, the plain Monte Carlo estimator is consistent but it has a slow rate of convergence rate. This can be analyzed theoretically via the _Central Limit Theorem_.
-
-Suppose that $"Var"(X) = sigma^2 < oo$, then
+The numerical results in the previous section for the European call and Asian options demonstrate that the plain Monte Carlo estimator is consistent but the convergence rate is slow. This is analyzed theoretically via the _Central Limit Theorem_. Suppose that $"Var"(X) = sigma^2 < oo$, then as $N -> oo$,
 $ sqrt(N) (hat(v) - v) -> N(0, sigma^2), $
-as $N -> oo$. This implies that  the standard error (S.E.) of $hat(v)$ decays at rate $cal(O)(N^(-1/2))$.
+implying that the S.E. of the plain Monte Carlo estimate decays at rate $cal(O)(N^(-1\/2))$.
 
 #figure(
   caption: [Plain Monte Carlo: standard error vs sample size.],
@@ -159,27 +155,25 @@ as $N -> oo$. This implies that  the standard error (S.E.) of $hat(v)$ decays at
     width: 12cm,)
 ] <plain-monte-carlo-se-vs-sample-size>
 
-This is illustrated in @plain-monte-carlo-se-vs-sample-size where the log-log plot of S.E. versus sample size $N$ follows a line with slope approximately $-1\/2$ for both the European and Asian Call Option estimates, matching the theoretical rate. However, in many situations, this rate of convergence may be too slow to achieve the desired accuracy within a reasonable computational budget.
+This is illustrated in @plain-monte-carlo-se-vs-sample-size where the log-log plot of S.E. versus sample size $N$ follows a line with slope approximately $-0.5$ for both the European and Asian Call Option estimates, matching the theoretical rate.
 
-When the option becomes _deep out-of-the-money_, e.g., $K >> S_0$, the frequency of exercising is extremely low, so the distribution of the payoff $h(X)$ is very skewed. This leads to large $sigma^2$ and slow convergence. In @plain-monte-carlo-re-vs-strike-price, we vary the strike price of the European call option from $K = 40$ to $K = 120$ and observe the relative error (R.E.) on a fixed sample size of $N = 10,000$. As $K$ increases, the R.E. explodes resulting in worthless estimates.
+In many situations, this rate of convergence may be too slow to achieve a desired accuracy within a reasonable computational budget. When the option becomes _deep out-of-the-money_, e.g., $K >> S_0$, the frequency of exercising is extremely low, so the distribution of the payoff $h(X)$ is very skewed. This leads to large $sigma^2$ and slow convergence. @plain-monte-carlo-re-vs-strike-price shows the relative error in the Monte Carlo estimate of the European call option price as the strike price of the European call option varies from $K = 40$ to $K = 120$ on a fixed sample size of $N = 10,000$. As $K$ increases, the R.E. explodes to resulting in unreliable estimates.
 
 #figure(
-  caption: [Plain Monte Carlo: Relative Error vs Strike Price],
+  caption: [European Call Option: relative error vs strike price in plain Monte Carlo.],
 )[
   #image("assets/plain-monte-carlo-re-vs-strike-price.png",
     width: 12cm,)
 ] <plain-monte-carlo-re-vs-strike-price>
 
-To get a more accurate estimate, increasing the sample size $N$ can become computationally prohibitive. Increasing the precision of the estimate by one decimal place (reducing S.E. by a factor of ten) requires one hundred times more samples. This motivates the usage of _variance reduction techniques_, to decrease the variance $sigma^2$ of the estimator without increasing the sample size.
+To improve the accuracy of Monte Carlo estimates, increasing the sample size $N$ can become computationally prohibitive. Increasing the precision of the estimate by one decimal place (reducing S.E. by a factor of ten) requires one hundred times more samples. This motivates the use of _variance reduction techniques_ that reduce the variance of the estimator without having to increase the sample size.
 
 
 #pagebreak()
 = Variance Reduction Techniques
 
-This section discusses two widely used methods in Monte Carlo to reduce estimator variance, antithetic sampling and control variates, following the presentation in #cite(label("textbook")).
-Control functionals will also introduced as an extension to Control Variates as a more recent approach. 
-All three techniques construct a new Monte Carlo estimator $hat(v)_"new"$ that is still unbiased but has lower variance than the plain estimator $hat(v)$ for the same sample size $N$. 
-
+This section discusses two widely used methods in Monte Carlo to reduce estimator variance, antithetic sampling and control variates following the presentation in #cite(label("textbook")). The method of control functionals will also introduced as an extension to control variates. 
+All three techniques construct a new estimator $hat(v)_"new"$ that is still unbiased but has lower variance than the plain estimator $hat(v)$ for the same sample size $N$. 
 
 == Antithetic Sampling
 Antithetic sampling is a varaince reduction technique that involves generating i.i.d. pairs of random variables $(X_i, Y_i)$ such that
@@ -249,7 +243,7 @@ $ X_i = g (U_i), quad Y_i = g (1 - U_i). $
   For $S_0 = 40$, the relative error of $hat(v)_"AS"$ decreases ($0.24%$) is lower than the relative error of $hat(v)$, indicating that antithetic sampling is effective in reducing variance. However, as $S_0$ approaches the $K$, the relative error of $hat(v)_("AS")$ increases until it is higher than the relative error of $hat(v)$ as shown in @straddle-option-antithetic-re-vs-S_0.
 
   #figure(
-    caption: [Straddle Option: Relative error of $hat(v)$ and $hat(v)_"AS"$ for $S_0 in [40, 60]$ ]
+    caption: [Straddle Option: relative error of $hat(v)$ and $hat(v)_"AS"$ for $S_0 in [40, 60]$ ]
   )[
     #image(
       "assets/straddle-option-re-vs-initial-stock-price.png",
@@ -260,7 +254,7 @@ $ X_i = g (U_i), quad Y_i = g (1 - U_i). $
 )
 
 === Limitations
-The effectiveness of antithetic sampling relies on inducing a strong negative correlation $beta << 0$ between paired samples $(X_i, Y_i)$.
+The effectiveness of antithetic sampling relies on the strength of the negative correlation $beta << 0$ between paired samples $(X_i, Y_i)$.
 This technique works well when the payoff function 
 $h$ is monotonic in the underlying random variable (e.g., European call option). In such cases, the antithetic sample $h(-Z)$ tends to move inversely to 
 $h(Z)$, producing $beta << 0$.
@@ -270,7 +264,7 @@ When $S_0 -> K$, the values of $X_i$ and $Y_i$ tend to be similar, producing str
 
 
 #figure(
-  caption: [Scatter plot of antithetic pairs $Y_i$ vs. $X_i$ for straddle option, with $S_0 = K = 50$.],
+  caption: [Straddle Option: scatter plot of antithetic pairs $Y_i$ vs. $X_i$, with $S_0 = K = 50$.],
 )[
   #image("assets/straddle-option-antithetic-scatter.png",
     width: 12cm,)
@@ -296,22 +290,21 @@ which is minimized when $b$ is chosen as
 $ b^* = beta sigma_X / sigma_Y =  ("Cov"[X, Y]) / ("Var"[Y]) $
 where $beta$ is the correlation between $X$ and $Y$. Intuitively, we are regressing $X$ against $Y$ and removing the component of $X$ that is explained by $Y$, resulting in lower variance#footnote[Usually, $b^*$ is estimated from a pilot run independent to the main simulation, otherwise bias may be introduced. In this view, $b^*$ is the estimated coefficient of $Y$ in the linear model $X ~ Y$.]. Under $b^*$, the variance of the new estimator is
 $ "Var"[hat(v)_"CV"] = (1 - beta^2) "Var"[X] / n = (1 - beta^2) "Var"[hat(v)], $
-which is lower than the variance of the plain Monte Carlo estimator by a factor of $1 - beta^2$. Therefore, the effectiveness of the control variate depends on $0 <= |beta| <= 1$.
+which is lower than the variance of the plain Monte Carlo estimator by a factor of $1 - beta^2$ which means the effectiveness of the control variate increases with $0 <= beta^2 <= 1$.
 
 === Examples <control-variates-examples>
 #enum(
   [*Asian Option.* Recall that the discounted payoff of our discretely monitored Asian call option is
   $ X = h(S_t_1, S_t_2, ..., S_t_m) = e^(-r T)(dash(S) - K)^+, quad dash(S) = 1/m sum_(i = 1)^m S_(t_i). $
-  We can use the discretely monitored geometric average price call option as a control variate because its mean is known analytically #cite(label("kemna1990pricing")). The control variate has the form
+  The discretely monitored asian call option with geometric average has a known mean, see #cite(label("kemna1990pricing")), so it can be used as a control variate
   $ Y =  e^(-r T)(dash(S)_G - K)^+, quad dash(S)_G = (product_(i = 1)^m S_(t_i))^(1\/m) $
-  with mean $EE[Y]$ has the analytical form
-  $ dash(mu) = log S_0 + (r - sigma^2 / 2) 1/m sum_(i = 1)^(m)  t_i, quad  dash(sigma)^2 = sigma^2 / m^2 sum_(i = 1)^(m) (2m - 2i + 1) t_i. $
+  and $EE[Y]$ has the form
+  $ dash(mu) = log S_0 + (r - sigma^2 / 2) dot.c 1/m sum_(i = 1)^(m)  t_i, quad  dash(sigma)^2 = sigma^2 / m^2 sum_(i = 1)^(m) (2m - 2i + 1) t_i. $
   $ EE[Y] = e^(-r T) [e^(dash(mu) + 1/2 dash(sigma)^2) Phi(dash(sigma) - theta) + K Phi(-theta)], quad theta = (log K - dash(mu))/dash(sigma). $
 
   Simulating with parameters,
-  $ S_0 = 50, r = 0.05, sigma = 0.2, T = 1 $
+  $ S_0 = 50, quad r = 0.05, quad sigma = 0.2, quad T = 1 $
   with sample size $N = 10,000$ and monitoring at $m = 100$ equally space time points, we estimate the Asian option price using both the plain Monte Carlo estimator $hat(v)$ and the control variate estimator $hat(v)_"CV"$ for $K = 60, 70, 80$ in @asian-option-control-variate-results.
-  The plain Monte Carlo estimate $hat(v)$ is compared against the control variate estimate $hat(v)_"CV"$ below.
   
   #figure(
     caption: [Asian Option: Control variate versus plain Monte Carlo],
@@ -329,11 +322,13 @@ which is lower than the variance of the plain Monte Carlo estimator by a factor 
     )
   ] <asian-option-control-variate-results>
 
-  As $K$ increases, the asian option becomes deep out-of-the-money, resulting in high relative error (R.E.) for the plain Monte Carlo estimator $hat(v)$. However, using the geometric average price call option as a control variate significantly reduces the variance of the estimator.
+  As $K$ increases, the option becomes deep out-of-the-money, resulting in high relative error (R.E.) for the plain Monte Carlo estimator $hat(v)$. However, using the geometric average price call option as a control variate significantly reduces the variance of the estimator.
   For $K = 80$, $hat(v)$ fails to provide a meaningful estimate while $hat(v)_"CV"$ still produces a reasonable estimate with R.E. of $13.39%$. The high value of $hat(beta)^2$ indicates a strong correlation between the geometric and arithmetic average price call option payoffs, leading to effective variance reduction.
 
   ],
-  [*Straddle Option.* Again, we use the terminal stock price $S_T$ to serve as a control variate. With the same parameters as in the antithetic sampling example, we simulate the straddle option and compare the plain Monte Carlo estimator with the control variate estimator in @straddle-option-results.
+  [*Straddle Option.* Under the risk-neutral measure, the mean of the terminal stock price $S_T$ is known analytically so we can use it as a control variate
+  $ Y = S_T ==> EE[Y] = S_0 e^(r T). $
+  With the same parameters as in the antithetic sampling example, we simulate the straddle option and compare the plain Monte Carlo estimator with the control variate estimator in @straddle-option-results.
 
   #figure(
     caption: [Straddle Option with the linear control variate $Y = S_T$.],
@@ -352,7 +347,7 @@ which is lower than the variance of the plain Monte Carlo estimator by a factor 
 
   A variance reduction of approximately 57.5% is observed when using $S_T$ as a control variate for $S_0$. However, as $S_0$ approaches the strike price $K = 50$, the variance reduction for this control variate diminishes to 10.9%.
 
- This decline in performance can be explained by the weak correlation between $S_T$ and the straddle payoff $h(S_T)$. As shown in @straddle-option-linear-scatter, the relationship between these two quantities is highly non-linear when $S_0 approx K$. Therefore, the linear control variate $Y = S_T$ fails to capture much of the variation in $h(S_T)$, leading to suboptimal variance reduction. This shows that the same control variate may not be effective across different parameter regimes.
+ This decline in performance can be explained by the weak correlation between $S_T$ and the straddle payoff $h(S_T)$. As shown in @straddle-option-linear-scatter, the relationship between these two quantities is highly non-linear when $S_0 approx K$. Therefore, the linear control variate $Y = S_T$ fails to capture much of the variation in target $h(S_T)$, leading to suboptimal variance reduction. This shows that the same control variate may not be effective across different parameter regimes.
 
   #figure(
     caption: [$h(S_T)$ vs. $S_T$ for straddle Option, $S_0 = K = 50$, using $S_T$ as a control variate.],
@@ -361,14 +356,15 @@ which is lower than the variance of the plain Monte Carlo estimator by a factor 
       width: 10cm,)
   ] <straddle-option-linear-scatter>
 
-  To improve upon this, additional control variates can be introduced. By observation, the $h(S_T)$ could be better fitted by a quadratic function of $S_T$.
-  Since the expected value of $S_T^2$ is known analytically
-  $ EE[S_T^2] = EE[S_T]^2 + "Var"(S_T) =  S_0^2 e^(2 r T + sigma^2 T), $
-  we can use it as a second control variate.
+  To improve on this, observe that $h(S_T)$ could be better fitted by a quadratic function of $S_T$. Thus, we consider adding a second control variate given by the square of the terminal stock price
+  $Y_1 = S_T, #h(0.5em)  Y_2 = S_T^2 $
+  since $EE[S_T^2]$ is known analytically
+  $ EE[S_T^2] = EE[S_T]^2 + "Var"(S_T) =  S_0^2 e^(2 r T + sigma^2 T). $
+  
   The optimal coefficients $b_1^*$ and $b_2^*$ can then be estimated via the linear regression of $h(S_T) ~ S_T + S_T^2$. The new control variate estimator is given by
   $ hat(v)_"CV" = dash(X) - b_1^*(dash(Y_1) - EE[Y_1]) - b_2^*(dash(Y_2) - EE[Y_2]) $
   where $Y_1 = S_T$ and $Y_2 = S_T^2$. 
-  Incorporating both control variates yields a variance reduction of approximately 86.2%, a substantial improvement over the linear control variate.
+  Incorporating both control variates yields a variance reduction of approximately 86.2% at $S_0 = K = 50$, a substantial improvement over the linear control variate.
 
   #figure(
     caption: [Straddle Option: $h(S_T)$ versus $S_T$ with $S_0 = K = 50$, using $S_T$ and $S_T^2$ as control variates.],
@@ -471,7 +467,7 @@ For deep-out-of-the-money options, control functionals can be combined with impo
     width: 20cm,)
 ] <straddle-option-control-functionals-example>
 
-It was claimed that under certain conditions, control functionals can achieve super-root-$N$ convergence. To empirically verify this, we simulate the straddle option price with varying sample sizes $N$ and compute the standard error of both the plain Monte Carlo estimator and the control functional estimator. The results are shown in @straddle-option-cf-convergence.
+It was claimed that under certain conditions, control functionals can achieve super-root-$N$ convergence. To verify this empirically, we simulate the straddle option price with varying sample sizes $N$ and compute the standard error of both the plain Monte Carlo estimator and the control functional estimator. The results are shown in @straddle-option-cf-convergence.
 
 #figure(
   caption: [Straddle Option: Convergence of control functional versus control variate and plain Monte Carlo estimators],
@@ -488,11 +484,11 @@ Control functionals have beautiful theoretical properties and are a first step t
 
 #enum(
   numbering: "1.",
-  [*Computational Cost.* Solving the RLS problem in (@rls-eq[]) according to the steps in @cf-methodology requires inverting an $M times M$ kernel matrix $K$, which incurs a computational cost of $cal(O)(M^3)$ in time and $cal(O)(M^2)$ cost in memory. This scales poorly and is entirely infeasible for $M >> 1e^5$.
+  [*Computational Cost.* Solving the RLS problem in (@rls-eq[]) according to the steps in @cf-methodology requires inverting an $M times M$ kernel matrix $K$, which incurs a computational cost of $cal(O)(M^3)$ in time and $cal(O)(M^2)$ cost in memory. This scales poorly and is infeasible for $M > 1e^5$.
   For training sample sizes $M$, the variance reduction benefits must be weighed against the increased computational burden.
   In contexts where the cost of function evaluation is low, the overhead of control functionals may not be justified.],
-  [*Kernel Selection.* The performance of control functionals is sensitive to the choice of kernel and its hyperparameters (e.g., $alpha_1, alpha_2$ in the modified RBF kernel) and the regularization parameter $lambda$.
-  Selecting an appropriate kernel requires empirical tuning, incurring additional compute.],
+  [*Kernel Selection and Tuning.* The performance of control functionals is sensitive to the choice of kernel and its hyperparameters (e.g., $alpha_1, alpha_2$ in the modified RBF kernel) and the regularization parameter $lambda$. When $N$ is large, there may be many points in $cal(D)_0$ near each other causing the kernel matrix $K_0$ to be very ill-conditioned. This can lead to numerical instability when inverting $K_0 + lambda M I$. The choice of $lambda$ is crucial to balance numerical stability and fast convergence.
+  ],
   [*Theoretical Assumptions.* The theoretical guarantee of super-root-$N$ rate of convergence hinges on several assumptions about the smoothness of $h$, the density $p$, and the properties of the RKHS induced by the kernel $k_0$. 
   One assumption is that the reproducing kernel $k_0$ is bounded $ sup_(z in Omega) k_0(z, z) < oo. $ And this may not hold for common kernels, e.g., standard RBF kernel
   $ k(z, z') = exp(-||z - z'||^2\/2 alpha^2). $
@@ -515,7 +511,8 @@ is replaced by the importance sampling estimator
 $ hat(v)_"IS" = 1/N sum_(i=1)^N h(X_i) f(X_i) / g(X_i), quad X_i ~ g(x) $
 where the quantity $f(X_i)\/g(X_i)$ is known as the likelihood ratio or importance weight. 
 
-Importance sampling has found widespread applications in finance, particularly in estimating rare-event probabilities such as Value-at-Risk (VaR) and Expected Shortfall (ES) where accurate estimation is difficult using standard Monte Carlo due to the low frequency of extreme losses. See @applications-in-finance for an illustration.
+Importance sampling has found widespread applications in finance, particularly in simulating rare-events such as estimating tail probabilities in credit risk portfolios or calculating
+Expected Shortfall (ES) where accurate estimation is difficult using standard Monte Carlo due to the low frequency of exteme losses. See @applications-in-finance for an illustration.
 
 === Variance Reduction
 The main challenge in IS is to select an alternative distribution $g$ that reduces the variance of the estimator. Intuitively, the variance is minimized when more samples are drawn from regions where $h(x) f(x)$ is large.
@@ -570,14 +567,14 @@ In certain cases, this equation can be solved in closed form. For example, if $g
 $ hat(mu)_(k+1) = (sum_(i=1)^N h(X_i) ell_(hat(mu)_k)(X_i) dot.c X_i) / (sum_(i=1)^N h(X_i) ell_(hat(mu)_k)(X_i) ) = (sum_(i=1)^N h(X_i) e^(-angle.l hat(mu)_k, X_i angle.r) dot.c X_i) / (sum_(i=1)^N h(X_i) e^(-angle.l hat(mu)_k, X_i angle.r) ). $
 This is known as the general iterative cross-entropy (CE) method.
 
-For more complicated parametric families $cal(G)$ where closed-form updates are not available, other optimization techniques such as stochastic gradient ascent, or EM-algorithm can be employed to maximize the objective in (@kl-loss-eq[]).
+For more complicated parametric families $cal(G)$ where closed-form updates are not available, other optimization techniques such as the EM-algorithm can be employed to maximize the objective in (@kl-loss-eq[]). Generally, the iterative CE method converges to a minimum within a few iterations.
 
 === Examples
 Similar to the problem estimating rare-event probabilities, deep out-of-the-money options are challenging to price accurately using standard Monte Carlo due to the low probability of exercise.
 Importance sampling can be employed to focus sampling efforts on the tail regions of the underlying asset's distribution where the option is more likely to be in-the-money at maturity.
 #enum(
-  [*European Option.* Revisiting the European call option, but this time we consider a deep out-of-the-money case with parameters:
-  $ S_0 = 50, r = 0.05, sigma = 0.2, T = 1. $
+  [*European Option.* Revisiting the European call option, but this time we consider a deep out-of-the-money case wher $K >> S_0$ with parameters:
+  $ S_0 = 50, quad r = 0.05, quad sigma = 0.2, quad T = 1. $
   We compare the performance of the plain Monte Carlo estimator against an importance sampling estimator across $K = 80, 100, 120$
   The alternative distribution $g$ is chosen via mode matching from the family of normal distributions $cal(G) = {N(mu, 1) : mu in RR}$.
   Taking the derivative of $h(x) f(x)$ and setting it to zero, we find that $mu^*$ satisfies
@@ -679,7 +676,7 @@ We will compute $PP(L > x)$ for the range $x in [0, 200]$ and compare the plain 
   These estimates and their 95% confidence intervals are reported in  @portfolio-credit-risk-results-plain-is. We observe that for $x > 80$, the estimates are highly unreliable with wide confidence intervals. In order to accurately estimate such rare-event probabilities, we turn to importance sampling.
 
   #figure(
-    caption: [Portfolio Credit Risk: plain Monte Carlo estimates of $PP(L > x)$.],
+    caption: [Portfolio Credit Risk: plain Monte Carlo and importance sampling estimates and 95% confidence intervals of $PP(L > x)$ against the loss threshold $x$. ],
   )[
     #image(
       "assets/portfolio-credit-risk-plain-is.png",
