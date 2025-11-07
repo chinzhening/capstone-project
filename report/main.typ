@@ -21,7 +21,7 @@
 }
 
 #set text(size: 11pt, font: fonts.serif)
-/#set par(leading: 1.15em)  // line spacing
+#set par(leading: 1.15em)  // line spacing
 
 #set table(stroke: 0.5pt)
 
