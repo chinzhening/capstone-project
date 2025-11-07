@@ -1,4 +1,4 @@
-# Capstone Project: Monte Carlo Methods with Applications to Finance
+# Capstone Project: Monte Carlo Methods and their Applications to Finance
 Repository for my MA4198 Capstone Project, read in Semester 1, AY2526 at NUS. Supervised by Prof. [Ren Weiqing](https://discovery.nus.edu.sg/3166-weiqing-ren).
 
 ## Overview
